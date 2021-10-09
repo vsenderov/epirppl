@@ -221,7 +221,7 @@ BBLOCK(simYapDengue,
   PSTATE.h.i[t] = PSTATE.h.i[t] + 1;
   PSTATE.h.e[t] = SAMPLE(poisson, 5.0);
   
-  PSTATE.h.r[t] = SAMPLE(randomInteger,  1+ n - PSTATE.h.i[t] - PSTATE.h.e[t]);
+  PSTATE.h.r[t] = SAMPLE(randomInteger,   n - PSTATE.h.i[t] - PSTATE.h.e[t]);
   //floor(SAMPLE(uniform, 0, 1 + n - PSTATE.h.i[t] - PSTATE.h.e[t]));
   //round(SAMPLE(uniform, 0, n - PSTATE.h.i[t] - PSTATE.h.e[t]));  // REVIEW
   PSTATE.h.s[t] = n - PSTATE.h.e[t] - PSTATE.h.i[t] - PSTATE.h.r[t];
