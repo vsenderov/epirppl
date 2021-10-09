@@ -176,6 +176,7 @@ BBLOCK(simObservation,
     NEXT = NULL;
     return;
   }
+  assert(t>=1);
   int n = PSTATE.h.s[t - 1] + PSTATE.h.e[t - 1] + PSTATE.h.i[t - 1] + PSTATE.h.r[t - 1];
   
   
@@ -214,6 +215,7 @@ BBLOCK(simYapDengue,
 {
   int n = 7370;
   int t = 0;
+  PSTATE.t = t;
   
   PSTATE.h.i[t] = SAMPLE(poisson, 5.0);
   PSTATE.h.i[t] = PSTATE.h.i[t] + 1;
