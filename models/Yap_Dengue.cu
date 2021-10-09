@@ -27,69 +27,9 @@ struct Test183_observations_t {
   const int cases[NUM_OBSERVATIONS] = {1, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 2, 0, 0, 1, 0, 0, 2, 1, 4, 2, 3, 2, 2, 4, 1, 3, 3, 4, 3, 3, 9, 1, 1, 7, 5, 4, 1, 2, 4, 7, 3, 6, 6, 4, 8, 6, 7, 2, 6, 7, 5, 7, 9, 10, 14, 9, 4, 5, 7, 10, 11, 17, 6, 13, 13, 14, 13, 12, 12, 15, 16, 12, 14, 11, 17, 10, 10, 16, 12, 17, 29, 21, 21, 25, 17, 12, 18, 11, 12, 10, 18, 8, 14, 10, 15, 16, 8, 7, 5, 7, 5, 5, 6, 11, 10, 5, 4, 9, 6, 1, 6, 3, 6, 4, 3, 5, 1, 8, 2, 9, 4, 5, 4, 3, 3, 4, 4, 3, 3, 4, 5, 2, 5, 4, 2, 6, 4, 2, 0, 4, 2, 1, 1, 1, 2, 3, 3, 3, 0, 3, 2, 1, 0, 1, 0, 0, 1, 2, 2, 1, 0, 1, 1, 1, -1, -1, -1, -1, -1, -1, 0, -1, -1, -1, -1, -1, -1, 0};
 };
 
-
-struct Test10_observations_t {
-  static const int NUM_OBSERVATIONS = 10;
-  const int cases[NUM_OBSERVATIONS] = {1, 2, 0, 0, 0, 0, 0, 0, 1, 0};
-};
-
-struct Test20_observations_t {
-  static const int NUM_OBSERVATIONS = 20;
-  const int cases[NUM_OBSERVATIONS] = {1, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 2, 0, 0, 1, 0};
-};
-
-struct Test25_observations_t {
-  static const int NUM_OBSERVATIONS = 25;
-  const int cases[NUM_OBSERVATIONS] = {1,2,0,0,0,0,0,0,1,0,0,0,0,0,1,2,0,0,1,0,0,2,1,4,2};
-};
-
-
-struct Test30_observations_t {
-  static const int NUM_OBSERVATIONS = 30;
-  const int cases[NUM_OBSERVATIONS] = {1,2,0,0,0,0,0,0,1,0,0,0,0,0,1,2,0,0,1,0,0,2,1,4,2,3,2,2,4,1};
-};
-
-struct Test21_observations_t {
-  static const int NUM_OBSERVATIONS = 21;
-  const int cases[NUM_OBSERVATIONS] = {1,2,0,0,0,0,0,0,1,0,0,0,0,0,1,2,0,0,1,0,0};
-};
-
-struct Test22_observations_t {
-  static const int NUM_OBSERVATIONS = 22;
-  const int cases[NUM_OBSERVATIONS] = {1,2,0,0,0,0,0,0,1,0,0,0,0,0,1,2,0,0,1,0,0,2};
-};
-
-struct Test23_observations_t {
-  static const int NUM_OBSERVATIONS = 23;
-  const int cases[NUM_OBSERVATIONS] = {1,2,0,0,0,0,0,0,1,0,0,0,0,0,1,2,0,0,1,0,0,2,1};
-};
-
-struct Test24_observations_t {
-  static const int NUM_OBSERVATIONS = 24;
-  const int cases[NUM_OBSERVATIONS] = {1,2,0,0,0,0,0,0,1,0,0,0,0,0,1,2,0,0,1,0,0,2,1,4};
-};
-
-struct Test1_observations_t {
-  static const int NUM_OBSERVATIONS = 1;
-  const int cases[NUM_OBSERVATIONS] = {1};
-};
-
-struct Test2_observations_t {
-  static const int NUM_OBSERVATIONS = 2;
-  const int cases[NUM_OBSERVATIONS] = {1,2};
-};
-
-
-struct Test3_observations_t {
-  static const int NUM_OBSERVATIONS = 3;
-  const int cases[NUM_OBSERVATIONS] = {1,2,0};
-};
-
-
 typedef Test183_observations_t y_obs_t;
 
 BBLOCK_DATA(y_obs, y_obs_t, 1)
-
 
 typedef struct {
   int dS[y_obs->NUM_OBSERVATIONS]; // Newly succeptible 
@@ -183,7 +123,6 @@ BBLOCK(simObservation,
   assert(t>=1);
   int n = PSTATE.h.s[t - 1] + PSTATE.h.e[t - 1] + PSTATE.h.i[t - 1] + PSTATE.h.r[t - 1];
   
-  
   /* transition of human population */
   int tau_h = SAMPLE(binomial, 1.0 - exp(-PSTATE.m.i[t - 1]/ (floating_t) n), PSTATE.h.s[t - 1]);
   BBLOCK_CALL(SEIRTransfer, &PSTATE.h, t, tau_h);
@@ -191,19 +130,12 @@ BBLOCK(simObservation,
   /* transition of mosquito population */
   int tau_m = SAMPLE(binomial, 1.0 - exp(-PSTATE.h.i[t - 1]/(floating_t) n), PSTATE.m.s[t - 1]);
   BBLOCK_CALL(SEIRTransfer, &PSTATE.m, t, tau_m);
-
-  
   PSTATE.z = PSTATE.z + PSTATE.h.dI[t];
-  //  printf("%d %d %f %d %f %d %d\n", tau_h, tau_m,  1.0 - exp(-PSTATE.m.i[t - 1]/ (floating_t)n), PSTATE.h.s[t - 1],1.0 - exp(-PSTATE.h.i[t - 1]/(floating_t)n), PSTATE.m.s[t - 1], PSTATE.z );
-
+ 
   if (y->cases[t] != -1) {
-    printf("%d\n", PSTATE.z);
-    //  printf("%f\n", binomialScore(PSTATE.rho, PSTATE.z, y->cases[t]));
     OBSERVE(binomial, PSTATE.rho, PSTATE.z, y->cases[t]);
     PSTATE.z = 0;
-  }
-  
-
+  } 
  })
 
 
@@ -215,14 +147,11 @@ BBLOCK(simYapDengue,
   int n = 7370;
   int t = PSTATE.t;
  
-  
   PSTATE.h.i[t] = SAMPLE(poisson, 5.0);
   PSTATE.h.i[t] = PSTATE.h.i[t] + 1;
   PSTATE.h.e[t] = SAMPLE(poisson, 5.0);
   
-  PSTATE.h.r[t] = SAMPLE(randomInteger,   n - PSTATE.h.i[t] - PSTATE.h.e[t]);
-  //floor(SAMPLE(uniform, 0, 1 + n - PSTATE.h.i[t] - PSTATE.h.e[t]));
-  //round(SAMPLE(uniform, 0, n - PSTATE.h.i[t] - PSTATE.h.e[t]));  // REVIEW
+  PSTATE.h.r[t] =   floor(SAMPLE(uniform, 0, 1 + n - PSTATE.h.i[t] - PSTATE.h.e[t]));
   PSTATE.h.s[t] = n - PSTATE.h.e[t] - PSTATE.h.i[t] - PSTATE.h.r[t];
   
   PSTATE.h.dS[t] = 0;
@@ -231,7 +160,7 @@ BBLOCK(simYapDengue,
   PSTATE.h.dR[t] = 0;
   
   floating_t u = SAMPLE(uniform, -1.0, 2.0);
-  PSTATE.m.s[t] = floor(n*pow(10.0, u)); // REVIEW
+  PSTATE.m.s[t] = floor(n*pow(10.0, u));
   PSTATE.m.e[t] = 0;
   PSTATE.m.i[t] = 0;
   PSTATE.m.r[t] = 0;
@@ -245,7 +174,6 @@ BBLOCK(simYapDengue,
   y_obs_t* y = DATA_POINTER(y_obs);
   PSTATE.z = PSTATE.z + PSTATE.h.dI[t];
   if (y->cases[t] != -1) {
-    //printf("%d", t);
     OBSERVE(binomial, PSTATE.rho, PSTATE.z, y->cases[t]);
     PSTATE.z = 0;
   }
