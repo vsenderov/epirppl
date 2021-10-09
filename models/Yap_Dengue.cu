@@ -74,10 +74,15 @@ struct Test1_observations_t {
   const int cases[NUM_OBSERVATIONS] = {1};
 };
 
+struct Test2_observations_t {
+  static const int NUM_OBSERVATIONS = 2;
+  const int cases[NUM_OBSERVATIONS] = {1,2};
+};
 
 
 
-typedef Test1_observations_t y_obs_t;
+
+typedef Test10_observations_t y_obs_t;
 
 BBLOCK_DATA(y_obs, y_obs_t, 1)
 
@@ -173,14 +178,17 @@ BBLOCK(simObservation,
   }
   int n = PSTATE.h.s[t - 1] + PSTATE.h.e[t - 1] + PSTATE.h.i[t - 1] + PSTATE.h.r[t - 1];
   
+  
   /* transition of human population */
-  int tau_h = SAMPLE(binomial, 1.0 - exp(-PSTATE.m.i[t - 1]/n), PSTATE.h.s[t - 1]);
+  int tau_h = SAMPLE(binomial, 1.0 - exp(-PSTATE.m.i[t - 1]/ (floating_t) n), PSTATE.h.s[t - 1]);
   BBLOCK_CALL(SEIRTransfer, PSTATE.h, t, tau_h);
   
   /* transition of mosquito population */
-  int tau_m = SAMPLE(binomial, 1.0 - exp(-PSTATE.h.i[t - 1]/n), PSTATE.m.s[t - 1]);
+  int tau_m = SAMPLE(binomial, 1.0 - exp(-PSTATE.h.i[t - 1]/(floating_t) n), PSTATE.m.s[t - 1]);
   BBLOCK_CALL(SEIRTransfer, PSTATE.m, t, tau_m);
-  
+
+  //printf("%d %d %f %d %f %d\n", tau_h, tau_m,  1.0 - exp(-PSTATE.m.i[t - 1]/ n), PSTATE.h.s[t - 1],1.0 - exp(-PSTATE.h.i[t - 1]/n), PSTATE.m.s[t - 1] );
+
  
   PSTATE.z = PSTATE.z + PSTATE.h.dI[t];
   if (y->cases[t] != -1) {
