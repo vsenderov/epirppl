@@ -69,9 +69,15 @@ struct Test24_observations_t {
   const int cases[NUM_OBSERVATIONS] = {1,2,0,0,0,0,0,0,1,0,0,0,0,0,1,2,0,0,1,0,0,2,1,4};
 };
 
+struct Test1_observations_t {
+  static const int NUM_OBSERVATIONS = 1;
+  const int cases[NUM_OBSERVATIONS] = {1};
+};
 
 
-typedef Test183_observations_t y_obs_t;
+
+
+typedef Test1_observations_t y_obs_t;
 
 BBLOCK_DATA(y_obs, y_obs_t, 1)
 
@@ -158,6 +164,13 @@ INIT_MODEL(progState_t)
 BBLOCK(simObservation,
 {
   int t = PSTATE.t;
+  y_obs_t* y = DATA_POINTER(y_obs);
+  
+  if (PSTATE.t < y->NUM_OBSERVATIONS - 1) PSTATE.t = ++t;
+  else {
+    NEXT = NULL;
+    return;
+  }
   int n = PSTATE.h.s[t - 1] + PSTATE.h.e[t - 1] + PSTATE.h.i[t - 1] + PSTATE.h.r[t - 1];
   
   /* transition of human population */
@@ -168,7 +181,7 @@ BBLOCK(simObservation,
   int tau_m = SAMPLE(binomial, 1.0 - exp(-PSTATE.h.i[t - 1]/n), PSTATE.m.s[t - 1]);
   BBLOCK_CALL(SEIRTransfer, PSTATE.m, t, tau_m);
   
-  y_obs_t* y = DATA_POINTER(y_obs);
+ 
   PSTATE.z = PSTATE.z + PSTATE.h.dI[t];
   if (y->cases[t] != -1) {
     // guard
@@ -182,8 +195,7 @@ BBLOCK(simObservation,
     PSTATE.z = 0;
   }
   
-  if (PSTATE.t < y->NUM_OBSERVATIONS) PSTATE.t = ++t;
-  else NEXT = NULL;
+
  })
 
 
@@ -235,8 +247,6 @@ BBLOCK(simYapDengue,
     PSTATE.z = 0;
   }
   
-  // Set up traversal
-  PSTATE.t = ++t;
   
   NEXT = simObservation;
   BBLOCK_CALL(NEXT, NULL);
