@@ -106,8 +106,11 @@ INIT_MODEL(progState_t)
 BBLOCK(test,
 {
   //PSTATE.x = SAMPLE(binomial, 0.5, 100);
-  for (int i = 0; i <= 6; i++)
-    printf("%f\n", binomialScore(0.5, 5, i));
+  PSTATE.x = SAMPLE(randomInteger, 10);
+  //  for (int i = 0; i <= 6; i++)
+  //  printf("%f\n", binomialScore(0.5, 5, i));
+
+  
   NEXT = NULL;   
 })
   
@@ -129,9 +132,16 @@ CALLBACK(COMPUTE, {
     printf("mean: %f variance: %f\n", xbar, variance);
   })
 
-
+  CALLBACK(OUTPUT, {
+    for (int j = 0; j < N; j++) {
+      printf("%d\n", PSTATES[j].x);
+    }
+      
+    })
+  
 MAIN({
     FIRST_BBLOCK(test);
     //SMC(COMPUTE)
-    SMC(NULL);
+    //    SMC(NULL);
+    SMC(OUTPUT);
 })
