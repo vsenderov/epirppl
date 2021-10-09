@@ -121,36 +121,36 @@ typedef struct {
  */
 BBLOCK_HELPER(SEIRTransfer, {
     /* total population */
-    int n = pop.s[t - 1] + pop.e[t - 1] + pop.i[t - 1] + pop.r[t - 1];
+    int n = pop->s[t - 1] + pop->e[t - 1] + pop->i[t - 1] + pop->r[t - 1];
   
     /* transfers */
-    pop.dE[t] = SAMPLE(binomial, pop.lambda, tau);
-    pop.dI[t] = SAMPLE(binomial, pop.delta, pop.e[t - 1]);
-    pop.dR[t] = SAMPLE(binomial, pop.gamma, pop.i[t - 1]);
+    pop->dE[t] = SAMPLE(binomial, pop->lambda, tau);
+    pop->dI[t] = SAMPLE(binomial, pop->delta, pop->e[t - 1]);
+    pop->dR[t] = SAMPLE(binomial, pop->gamma, pop->i[t - 1]);
 
-    pop.s[t] = pop.s[t - 1] - pop.dE[t];
-    pop.e[t] = pop.e[t - 1] + pop.dE[t] - pop.dI[t];
-    pop.i[t] = pop.i[t - 1] + pop.dI[t] - pop.dR[t];
-    pop.r[t] = pop.r[t - 1] + pop.dR[t];
+    pop->s[t] = pop->s[t - 1] - pop->dE[t];
+    pop->e[t] = pop->e[t - 1] + pop->dE[t] - pop->dI[t];
+    pop->i[t] = pop->i[t - 1] + pop->dI[t] - pop->dR[t];
+    pop->r[t] = pop->r[t - 1] + pop->dR[t];
     
     /* survival; we assume that if the survival rate is set to one, what is
      * meant is "all survive" regardless of the population size, and so do
      * not evaluate these, ensuring we don't get -inf weights for mismatching
      * numbers of trials (population sizes) */
-    if (pop.mu != 1.0) {
-      pop.s[t] = SAMPLE(binomial, pop.mu, pop.s[t]);
-      pop.e[t] = SAMPLE(binomial, pop.mu, pop.e[t]);
-      pop.i[t] = SAMPLE(binomial, pop.mu, pop.i[t]);
-      pop.r[t] = SAMPLE(binomial, pop.mu, pop.r[t]);
+    if (pop->mu != 1.0) {
+      pop->s[t] = SAMPLE(binomial, pop->mu, pop->s[t]);
+      pop->e[t] = SAMPLE(binomial, pop->mu, pop->e[t]);
+      pop->i[t] = SAMPLE(binomial, pop->mu, pop->i[t]);
+      pop->r[t] = SAMPLE(binomial, pop->mu, pop->r[t]);
     }
 
     /* births */
-    if (pop.nu != 0.0) {
-      pop.dS[t] = SAMPLE(binomial, pop.nu, n);
-      pop.s[t] = pop.s[t] + pop.dS[t];
+    if (pop->nu != 0.0) {
+      pop->dS[t] = SAMPLE(binomial, pop->nu, n);
+      pop->s[t] = pop->s[t] + pop->dS[t];
     }
     
-  }, void, SEIRComponent& pop, int t, int tau);
+  }, void, SEIRComponent* pop, int t, int tau);
 
 typedef short obsIdx_t;
 
@@ -186,20 +186,19 @@ BBLOCK(simObservation,
   
   /* transition of human population */
   int tau_h = SAMPLE(binomial, 1.0 - exp(-PSTATE.m.i[t - 1]/ (floating_t) n), PSTATE.h.s[t - 1]);
-  BBLOCK_CALL(SEIRTransfer, PSTATE.h, t, tau_h);
+  BBLOCK_CALL(SEIRTransfer, &PSTATE.h, t, tau_h);
   
   /* transition of mosquito population */
   int tau_m = SAMPLE(binomial, 1.0 - exp(-PSTATE.h.i[t - 1]/(floating_t) n), PSTATE.m.s[t - 1]);
-  BBLOCK_CALL(SEIRTransfer, PSTATE.m, t, tau_m);
+  BBLOCK_CALL(SEIRTransfer, &PSTATE.m, t, tau_m);
 
-  //printf("%d %d %f %d %f %d\n", tau_h, tau_m,  1.0 - exp(-PSTATE.m.i[t - 1]/ n), PSTATE.h.s[t - 1],1.0 - exp(-PSTATE.h.i[t - 1]/n), PSTATE.m.s[t - 1] );
-
- 
+  
   PSTATE.z = PSTATE.z + PSTATE.h.dI[t];
-  if (y->cases[t] != -1) {
-    
+  //  printf("%d %d %f %d %f %d %d\n", tau_h, tau_m,  1.0 - exp(-PSTATE.m.i[t - 1]/ (floating_t)n), PSTATE.h.s[t - 1],1.0 - exp(-PSTATE.h.i[t - 1]/(floating_t)n), PSTATE.m.s[t - 1], PSTATE.z );
 
-    //printf("%f\n", binomialScore(PSTATE.rho, PSTATE.z, y->cases[t]));
+  if (y->cases[t] != -1) {
+    printf("%d\n", PSTATE.z);
+    //  printf("%f\n", binomialScore(PSTATE.rho, PSTATE.z, y->cases[t]));
     OBSERVE(binomial, PSTATE.rho, PSTATE.z, y->cases[t]);
     PSTATE.z = 0;
   }
@@ -246,14 +245,13 @@ BBLOCK(simYapDengue,
   y_obs_t* y = DATA_POINTER(y_obs);
   PSTATE.z = PSTATE.z + PSTATE.h.dI[t];
   if (y->cases[t] != -1) {
- 
+    //printf("%d", t);
     OBSERVE(binomial, PSTATE.rho, PSTATE.z, y->cases[t]);
     PSTATE.z = 0;
   }
-  
-  
+ 
   NEXT = simObservation;
-  BBLOCK_CALL(NEXT, NULL);
+
  })
 
 
@@ -270,7 +268,8 @@ BBLOCK(initialization, {
     PSTATE.m.delta = SAMPLE(beta,1.0 + 2.0/6.5, 3.0 - 2.0/6.5);
     PSTATE.m.gamma = 0.0;
     
-    PSTATE.rho = SAMPLE(beta, 1.0, 1.0);
+    PSTATE.rho =  SAMPLE(beta, 1.0, 1.0);
+    
     PSTATE.z = 0;
     PSTATE.t = 0;
     
