@@ -80,9 +80,13 @@ struct Test2_observations_t {
 };
 
 
+struct Test3_observations_t {
+  static const int NUM_OBSERVATIONS = 3;
+  const int cases[NUM_OBSERVATIONS] = {1,2,0};
+};
 
 
-typedef Test10_observations_t y_obs_t;
+typedef Test183_observations_t y_obs_t;
 
 BBLOCK_DATA(y_obs, y_obs_t, 1)
 
@@ -193,12 +197,8 @@ BBLOCK(simObservation,
  
   PSTATE.z = PSTATE.z + PSTATE.h.dI[t];
   if (y->cases[t] != -1) {
-    // guard
-    if (y->cases[t] > PSTATE.z) {
-      WEIGHT(-INFINITY);
-      return;
-    }
-    // guard
+    
+
     //printf("%f\n", binomialScore(PSTATE.rho, PSTATE.z, y->cases[t]));
     OBSERVE(binomial, PSTATE.rho, PSTATE.z, y->cases[t]);
     PSTATE.z = 0;
@@ -214,8 +214,8 @@ BBLOCK(simObservation,
 BBLOCK(simYapDengue,
 {
   int n = 7370;
-  int t = 0;
-  PSTATE.t = t;
+  int t = PSTATE.t;
+ 
   
   PSTATE.h.i[t] = SAMPLE(poisson, 5.0);
   PSTATE.h.i[t] = PSTATE.h.i[t] + 1;
@@ -246,13 +246,7 @@ BBLOCK(simYapDengue,
   y_obs_t* y = DATA_POINTER(y_obs);
   PSTATE.z = PSTATE.z + PSTATE.h.dI[t];
   if (y->cases[t] != -1) {
-    // guard
-    if (y->cases[t] > PSTATE.z) {
-      WEIGHT(-INFINITY);
-      return;
-    }
-    // guard
-    
+ 
     OBSERVE(binomial, PSTATE.rho, PSTATE.z, y->cases[t]);
     PSTATE.z = 0;
   }
@@ -278,6 +272,7 @@ BBLOCK(initialization, {
     
     PSTATE.rho = SAMPLE(beta, 1.0, 1.0);
     PSTATE.z = 0;
+    PSTATE.t = 0;
     
     NEXT = simYapDengue;
     BBLOCK_CALL(NEXT, NULL);
