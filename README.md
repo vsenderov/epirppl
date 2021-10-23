@@ -17,7 +17,7 @@ It is licensed under the Apache License, Version 2.0 (the "License"); you may no
 
 To build, use:
 
-    rootppl models/Yap-Dengue.cu
+    rootppl models/Yap_Dengue.cu
 
 To run, use:
 
